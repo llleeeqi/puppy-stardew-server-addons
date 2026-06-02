@@ -124,18 +124,8 @@ h1 { font-size: 1.8em; margin-bottom: 2px; color: #fff; }
         <label>同步类型</label>
         <select id="cfg-type" onchange="onTypeChange()">
           <option value="none">关闭</option>
-          <option value="s3">S3 兼容对象存储</option>
           <option value="webdav">WebDAV</option>
         </select>
-      </div>
-      <div id="cfg-s3" style="display:none">
-        <div class="form-row"><label>Endpoint</label><input id="cfg-s3-endpoint" placeholder="https://s3.amazonaws.com"></div>
-        <div class="form-row"><label>Bucket</label><input id="cfg-s3-bucket" placeholder="my-backups"></div>
-        <div class="form-row"><label>Region</label><input id="cfg-s3-region" placeholder="us-east-1"></div>
-        <div class="form-row"><label>Access Key</label><input id="cfg-s3-key" placeholder="AKID..."></div>
-        <div class="form-row"><label>Secret Key</label><input id="cfg-s3-secret" type="password" placeholder="sk-..."></div>
-        <div class="form-row"><label>路径前缀（可选）</label><input id="cfg-s3-path" placeholder="stardew/backups/"></div>
-        <div class="form-row"><label>保留份数</label><input id="cfg-keep" type="number" value="20" min="1" max="99"></div>
       </div>
       <div id="cfg-webdav" style="display:none">
         <div class="form-row"><label>WebDAV URL</label><input id="cfg-webdav-url" placeholder="https://webdav.example.com/backups/"></div>
@@ -201,14 +191,6 @@ async function loadBackupConfig() {
     const r = await fetch('/api/backup/config');
     const cfg = await r.json();
     document.getElementById('cfg-type').value = cfg.type || 'none';
-    if (cfg.s3) {
-      document.getElementById('cfg-s3-endpoint').value = cfg.s3.endpoint || '';
-      document.getElementById('cfg-s3-bucket').value = cfg.s3.bucket || '';
-      document.getElementById('cfg-s3-region').value = cfg.s3.region || '';
-      document.getElementById('cfg-s3-key').value = cfg.s3.accessKey || '';
-      document.getElementById('cfg-s3-secret').value = cfg.s3.secretKey || '';
-      document.getElementById('cfg-s3-path').value = cfg.s3.path || '';
-    }
     if (cfg.webdav) {
       document.getElementById('cfg-webdav-url').value = cfg.webdav.url || '';
       document.getElementById('cfg-webdav-user').value = cfg.webdav.username || '';
@@ -242,17 +224,7 @@ function toggleBackupConfig() {
 async function saveBackupConfig() {
   const t = document.getElementById('cfg-type').value;
   const cfg = { type: t, keep: 20 };
-  if (t === 's3') {
-    cfg.s3 = {
-      endpoint: document.getElementById('cfg-s3-endpoint').value,
-      bucket: document.getElementById('cfg-s3-bucket').value,
-      region: document.getElementById('cfg-s3-region').value,
-      accessKey: document.getElementById('cfg-s3-key').value,
-      secretKey: document.getElementById('cfg-s3-secret').value,
-      path: document.getElementById('cfg-s3-path').value,
-    };
-    cfg.keep = parseInt(document.getElementById('cfg-keep').value) || 20;
-  } else if (t === 'webdav') {
+  if (t === 'webdav') {
     cfg.webdav = {
       url: document.getElementById('cfg-webdav-url').value,
       username: document.getElementById('cfg-webdav-user').value,

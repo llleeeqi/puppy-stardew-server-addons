@@ -12,9 +12,6 @@ RUN wget -qO- 'https://github.com/novnc/noVNC/archive/refs/tags/v1.4.0.tar.gz' |
     tar xz -C /opt && \
     mv /opt/noVNC-1.4.0 /opt/noVNC
 
-RUN wget -qO /usr/local/bin/mc 'https://dl.min.io/client/mc/release/linux-amd64/mc' && \
-    chmod +x /usr/local/bin/mc
-
 COPY landing/ /opt/landing/
 RUN cd /opt/landing && npm init -y > /dev/null 2>&1
 

@@ -124,17 +124,6 @@ function saveSyncState(state) {
 
 // ─── Backup Upload ───────────────────────────────────────────────
 
-function uploadToS3(filePath, remotePath, config, callback) {
-  const { endpoint, bucket, region, accessKey, secretKey, path: prefix } = config;
-  const aliasName = 'puppybackup';
-  const destPath = prefix ? `${prefix}/${remotePath}` : remotePath;
-  const cmds = [
-    `mc alias set ${aliasName} ${endpoint} ${accessKey} ${secretKey} --api S3v4 > /dev/null 2>&1`,
-    `mc cp "${filePath}" ${aliasName}/${bucket}/${destPath} > /dev/null 2>&1`,
-  ];
-  exec(cmds.join(' && '), { timeout: 300000 }, (err) => callback(err));
-}
-
 function uploadToWebDAV(filePath, remotePath, config, callback) {
   const { url, username, password } = config;
   const dest = `${url.replace(/\/+$/, '')}/${remotePath.split('/').map(encodeURIComponent).join('/')}`;
@@ -143,25 +132,16 @@ function uploadToWebDAV(filePath, remotePath, config, callback) {
 }
 
 function uploadFile(filePath, remotePath, config, callback) {
-  switch (config.type) {
-    case 's3': uploadToS3(filePath, remotePath, config, callback); break;
-    case 'webdav': uploadToWebDAV(filePath, remotePath, config, callback); break;
-    default: callback(null);
-  }
+  if (config.type === 'webdav') uploadToWebDAV(filePath, remotePath, config.webdav, callback);
+  else callback(null);
 }
 
 function removeRemote(remotePath, config) {
-  if (config.type === 's3') {
-    const { endpoint, bucket, accessKey, secretKey, path: prefix } = config;
-    const aliasName = 'puppybackup';
-    const destPath = prefix ? `${prefix}/${remotePath}` : remotePath;
-    exec(`mc alias set ${aliasName} ${endpoint} ${accessKey} ${secretKey} --api S3v4 > /dev/null 2>&1 && mc rm ${aliasName}/${bucket}/${destPath} > /dev/null 2>&1`);
-  } else if (config.type === 'webdav') {
-    const { url, username, password } = config;
-    const dest = `${url.replace(/\/+$/, '')}/${remotePath.split('/').map(encodeURIComponent).join('/')}`;
-    const auth = username ? `-u "${username}:${password}"` : '';
-    exec(`curl -s -X DELETE ${auth} "${dest}"`);
-  }
+  const { url, username, password } = config;
+  if (!url) return;
+  const dest = `${url.replace(/\/+$/, '')}/${remotePath.split('/').map(encodeURIComponent).join('/')}`;
+  const auth = username ? `-u "${username}:${password}"` : '';
+  exec(`curl -s -X DELETE ${auth} "${dest}"`);
 }
 
 function syncBackup(filePath, remoteFolder) {
@@ -185,7 +165,7 @@ function syncBackup(filePath, remoteFolder) {
       const all = state.history[remoteFolder].sort();
       if (all.length > keep) {
         state.history[remoteFolder] = all.slice(all.length - keep);
-        all.slice(0, all.length - keep).forEach(f => removeRemote(`${remoteFolder}/${f}`, config));
+        all.slice(0, all.length - keep).forEach(f => removeRemote(`${remoteFolder}/${f}`, config.webdav));
       }
       saveSyncState(state);
     }
@@ -353,18 +333,15 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/backup/test' && req.method === 'POST') {
     const config = loadBackupConfig();
     if (config.type === 'none' || !config.type) { sendJson(res, 400, { error: '未配置备份目标' }); return; }
-    const testFile = path.join(BACKUPS_DIR, '.puppy-backup-test');
+    const testFile = '/tmp/.puppy-backup-test';
     fs.writeFileSync(testFile, 'test');
     const cb = (err) => {
       try { fs.unlinkSync(testFile); } catch {}
       if (err) sendJson(res, 500, { error: `连接失败: ${err.message}` });
       else sendJson(res, 200, { ok: true });
     };
-    switch (config.type) {
-      case 's3': uploadToS3(testFile, '.puppy-backup-test', config, cb); break;
-      case 'webdav': uploadToWebDAV(testFile, '.puppy-backup-test', config, cb); break;
-      default: sendJson(res, 400, { error: '未知类型' });
-    }
+    if (config.type === 'webdav') uploadToWebDAV(testFile, '.puppy-backup-test', config.webdav, cb);
+    else sendJson(res, 400, { error: '未知类型' });
     return;
   }
 
