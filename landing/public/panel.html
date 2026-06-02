@@ -291,7 +291,7 @@ async function listFiles(folder) {
     }
     let html = folder === 'mods'
       ? '<button class="btn-link btn-sm btn-ghost" onclick="manualModBackup()" style="margin-bottom:6px">📦 手动备份 Mod</button>'
-      : '';
+      : '<div style="height:30px"></div>';
     html += files.slice().sort().reverse().map(f =>
       `<div style="padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05)">${f}</div>`
     ).join('');
