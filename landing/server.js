@@ -144,6 +144,53 @@ function removeRemote(remotePath, config) {
   exec(`curl -s -X DELETE ${auth} "${dest}"`);
 }
 
+function getModsTotalSize() {
+  if (!fs.existsSync(MODS_DIR)) return 0;
+  let total = 0;
+  try {
+    const files = fs.readdirSync(MODS_DIR);
+    files.forEach(f => {
+      if (f.endsWith('.zip')) {
+        try { total += fs.statSync(path.join(MODS_DIR, f)).size; } catch {}
+      }
+    });
+  } catch {}
+  return total;
+}
+
+function checkModsAndBackup(config, cb) {
+  const currentSize = getModsTotalSize();
+  const state = loadSyncState();
+  const lastSize = state.mods_last_size || 0;
+  if (currentSize === lastSize) { if (cb) cb(false); return; }
+
+  const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const tarName = `mods-backup-${stamp}.tar.gz`;
+  const tarPath = `/tmp/${tarName}`;
+
+  exec(`tar czf "${tarPath}" -C "${MODS_DIR}" . 2>/dev/null`, (tarErr) => {
+    if (tarErr) { console.log('[BackupSync] ❌ mods tar failed'); if (cb) cb(true); return; }
+    uploadFile(tarPath, `mods/${tarName}`, config, (upErr) => {
+      try { fs.unlinkSync(tarPath); } catch {}
+      if (upErr) { console.log(`[BackupSync] ❌ mods backup upload failed: ${upErr.message}`); if (cb) cb(true); return; }
+      console.log(`[BackupSync] ✓ mods backup uploaded (size changed: ${lastSize} → ${currentSize})`);
+      const newState = loadSyncState();
+      newState.mods_last_size = currentSize;
+      if (!newState.history) newState.history = {};
+      if (!newState.history.mods) newState.history.mods = [];
+      newState.history.mods.push(tarName);
+      const keep = config.keep || 20;
+      const all = newState.history.mods.sort();
+      if (all.length > keep) {
+        newState.history.mods = all.slice(all.length - keep);
+        all.slice(0, all.length - keep).forEach(f => removeRemote(`mods/${f}`, config.webdav));
+      }
+      saveSyncState(newState);
+      if (cb) cb(false);
+    });
+  });
+}
+
 function syncBackup(filePath, remoteFolder) {
   const config = loadBackupConfig();
   if (!config.type || config.type === 'none') return;
@@ -160,7 +207,6 @@ function syncBackup(filePath, remoteFolder) {
       if (!state.history) state.history = {};
       if (!state.history[remoteFolder]) state.history[remoteFolder] = [];
       state.history[remoteFolder].push(fileName);
-      // 清理远端多余备份
       const keep = config.keep || 20;
       const all = state.history[remoteFolder].sort();
       if (all.length > keep) {
@@ -168,6 +214,9 @@ function syncBackup(filePath, remoteFolder) {
         all.slice(0, all.length - keep).forEach(f => removeRemote(`${remoteFolder}/${f}`, config.webdav));
       }
       saveSyncState(state);
+
+      // 面板备份同步成功后，顺便检查 mod 目录是否有变化
+      checkModsAndBackup(config);
     }
   });
 }
@@ -188,20 +237,6 @@ function startBackupWatcher() {
       });
       console.log(`[BackupSync] Watching ${BACKUPS_DIR}`);
     } else console.log(`[BackupSync] Skip: ${BACKUPS_DIR} not found`);
-
-    if (fs.existsSync(MODS_DIR)) {
-      fs.watch(MODS_DIR, (eventType, fileName) => {
-        if (!fileName || !fileName.endsWith('.zip')) return;
-        if (eventType !== 'rename') return;
-        setTimeout(() => {
-          const fp = path.join(MODS_DIR, fileName);
-          if (fs.existsSync(fp)) syncBackup(fp, 'mods');
-        }, 3000);
-      });
-      console.log(`[BackupSync] Watching ${MODS_DIR}`);
-    } else console.log(`[BackupSync] Skip: ${MODS_DIR} not found`);
-
-    if (!fs.existsSync(SAVES_DIR)) console.log(`[BackupSync] Skip: ${SAVES_DIR} not found`);
   } catch (e) {
     console.log(`[BackupSync] Error: ${e.message}`);
   }
