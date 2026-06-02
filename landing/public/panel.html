@@ -211,12 +211,6 @@ async function loadBackupConfig() {
     updateBackupTag(cfg);
   } catch (e) { console.log('loadBackupConfig error:', e); }
 }
-    document.getElementById('cfg-keep').value = cfg.keep || 20;
-    document.getElementById('cfg-keep-wd').value = cfg.keep || 20;
-    onTypeChange();
-    updateBackupTag(cfg);
-  } catch {}
-}
 
 function updateBackupTag(cfg) {
   const tag = document.getElementById('backup-status-tag');
