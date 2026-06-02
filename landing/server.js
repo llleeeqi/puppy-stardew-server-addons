@@ -12,6 +12,8 @@ const PANEL_PORT = process.env.PANEL_PORT || '18642';
 const VNC_HOST = process.env.VNC_HOST || process.env.VNC_PUBLIC_IP || 'localhost';
 const VNC_PORT = process.env.VNC_WEB_PORT || '43000';
 const BACKUPS_DIR = process.env.BACKUPS_DIR || '/data/backups';
+const SAVES_DIR = process.env.SAVES_DIR || '/data/saves';
+const MODS_DIR = process.env.MODS_DIR || '/data/custom-mods';
 const BACKUP_CONFIG_PATH = process.env.BACKUP_CONFIG || '/data/backup-config.json';
 const SYNC_STATE_PATH = path.join(path.dirname(BACKUP_CONFIG_PATH), 'sync-state.json');
 const RETRY_INTERVAL = 3000;
@@ -122,10 +124,10 @@ function saveSyncState(state) {
 
 // ─── Backup Upload ───────────────────────────────────────────────
 
-function uploadToS3(filePath, fileName, config, callback) {
+function uploadToS3(filePath, remotePath, config, callback) {
   const { endpoint, bucket, region, accessKey, secretKey, path: prefix } = config;
   const aliasName = 'puppybackup';
-  const destPath = prefix ? `${prefix}/${fileName}` : fileName;
+  const destPath = prefix ? `${prefix}/${remotePath}` : remotePath;
   const cmds = [
     `mc alias set ${aliasName} ${endpoint} ${accessKey} ${secretKey} --api S3v4 > /dev/null 2>&1`,
     `mc cp "${filePath}" ${aliasName}/${bucket}/${destPath} > /dev/null 2>&1`,
@@ -133,52 +135,116 @@ function uploadToS3(filePath, fileName, config, callback) {
   exec(cmds.join(' && '), { timeout: 300000 }, (err) => callback(err));
 }
 
-function uploadToWebDAV(filePath, fileName, config, callback) {
+function uploadToWebDAV(filePath, remotePath, config, callback) {
   const { url, username, password } = config;
-  const dest = `${url.replace(/\/+$/, '')}/${encodeURIComponent(fileName)}`;
+  const dest = `${url.replace(/\/+$/, '')}/${remotePath.split('/').map(encodeURIComponent).join('/')}`;
   const auth = username ? `-u "${username}:${password}"` : '';
   exec(`curl -s -T "${filePath}" ${auth} "${dest}"`, { timeout: 300000 }, (err) => callback(err));
 }
 
-function syncBackup(filePath) {
+function uploadFile(filePath, remotePath, config, callback) {
+  switch (config.type) {
+    case 's3': uploadToS3(filePath, remotePath, config, callback); break;
+    case 'webdav': uploadToWebDAV(filePath, remotePath, config, callback); break;
+    default: callback(null);
+  }
+}
+
+function removeRemote(remotePath, config) {
+  if (config.type === 's3') {
+    const { endpoint, bucket, accessKey, secretKey, path: prefix } = config;
+    const aliasName = 'puppybackup';
+    const destPath = prefix ? `${prefix}/${remotePath}` : remotePath;
+    exec(`mc alias set ${aliasName} ${endpoint} ${accessKey} ${secretKey} --api S3v4 > /dev/null 2>&1 && mc rm ${aliasName}/${bucket}/${destPath} > /dev/null 2>&1`);
+  } else if (config.type === 'webdav') {
+    const { url, username, password } = config;
+    const dest = `${url.replace(/\/+$/, '')}/${remotePath.split('/').map(encodeURIComponent).join('/')}`;
+    const auth = username ? `-u "${username}:${password}"` : '';
+    exec(`curl -s -X DELETE ${auth} "${dest}"`);
+  }
+}
+
+function syncBackup(filePath, remoteFolder) {
   const config = loadBackupConfig();
   if (!config.type || config.type === 'none') return;
 
   const fileName = path.basename(filePath);
-  const cb = (err) => {
-    if (err) {
-      console.log(`[BackupSync] ❌ ${fileName} sync failed: ${err.message}`);
-    } else {
-      console.log(`[BackupSync] ✓ ${fileName} synced`);
-      const state = loadSyncState();
-      state.synced.push(fileName);
-      saveSyncState(state);
-      // 清理远程多余备份（保留 config.keep 份）
-      const all = state.synced.sort();
-      if (all.length > config.keep) {
-        const toRemove = all.slice(0, all.length - config.keep);
-        state.synced = all.slice(all.length - config.keep);
-        saveSyncState(state);
-        toRemove.forEach(f => {
-          if (config.type === 's3') {
-            const { endpoint, bucket, region, accessKey, secretKey, path: prefix } = config;
-            const aliasName = 'puppybackup';
-            const destPath = prefix ? `${prefix}/${f}` : f;
-            exec(`mc alias set ${aliasName} ${endpoint} ${accessKey} ${secretKey} --api S3v4 > /dev/null 2>&1 && mc rm ${aliasName}/${bucket}/${destPath} > /dev/null 2>&1`);
-          } else if (config.type === 'webdav') {
-            const { url, username, password } = config;
-            const dest = `${url.replace(/\/+$/, '')}/${encodeURIComponent(f)}`;
-            const auth = username ? `-u "${username}:${password}"` : '';
-            exec(`curl -s -X DELETE ${auth} "${dest}"`);
-          }
-        });
-      }
-    }
-  };
+  const remotePath = remoteFolder ? `${remoteFolder}/${fileName}` : fileName;
 
-  switch (config.type) {
-    case 's3': uploadToS3(filePath, fileName, config, cb); break;
-    case 'webdav': uploadToWebDAV(filePath, fileName, config, cb); break;
+  uploadFile(filePath, remotePath, config, (err) => {
+    if (err) {
+      console.log(`[BackupSync] ❌ ${remotePath} sync failed: ${err.message}`);
+    } else {
+      console.log(`[BackupSync] ✓ ${remotePath} synced`);
+      const state = loadSyncState();
+      if (!state.history) state.history = {};
+      if (!state.history[remoteFolder]) state.history[remoteFolder] = [];
+      state.history[remoteFolder].push(fileName);
+      // 清理远端多余备份
+      const keep = config.keep || 20;
+      const all = state.history[remoteFolder].sort();
+      if (all.length > keep) {
+        state.history[remoteFolder] = all.slice(all.length - keep);
+        all.slice(0, all.length - keep).forEach(f => removeRemote(`${remoteFolder}/${f}`, config));
+      }
+      saveSyncState(state);
+    }
+  });
+}
+
+function backupSaves() {
+  const config = loadBackupConfig();
+  if (!config.type || config.type === 'none') return;
+  if (!fs.existsSync(SAVES_DIR)) return;
+
+  const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const tarPath = `/tmp/saves-${stamp}-${Date.now()}.tar.gz`;
+
+  exec(`tar czf "${tarPath}" -C "${SAVES_DIR}" . 2>/dev/null`, (err) => {
+    if (err) { console.log('[BackupSync] ❌ saves tar failed'); return; }
+    uploadFile(tarPath, `saves/saves-${stamp}.tar.gz`, config, (uErr) => {
+      if (uErr) console.log(`[BackupSync] ❌ saves upload failed: ${uErr.message}`);
+      else console.log(`[BackupSync] ✓ saves backed up`);
+      try { fs.unlinkSync(tarPath); } catch {}
+    });
+  });
+}
+
+function startBackupWatcher() {
+  const state = loadSyncState();
+  if (!state.history) state.history = {};
+
+  // 1. 监控自动备份存档（data/backups/）
+  if (fs.existsSync(BACKUPS_DIR)) {
+    fs.watch(BACKUPS_DIR, (eventType, fileName) => {
+      if (!fileName || !fileName.endsWith('.tar.gz') && !fileName.endsWith('.zip')) return;
+      if (eventType !== 'rename') return;
+      setTimeout(() => {
+        const fp = path.join(BACKUPS_DIR, fileName);
+        if (fs.existsSync(fp)) syncBackup(fp, 'archives');
+      }, 3000);
+    });
+    console.log(`[BackupSync] Watching ${BACKUPS_DIR}`);
+  }
+
+  // 2. 监控自定义 Mod（data/custom-mods/）— 只同步 .zip
+  if (fs.existsSync(MODS_DIR)) {
+    fs.watch(MODS_DIR, (eventType, fileName) => {
+      if (!fileName || !fileName.endsWith('.zip')) return;
+      if (eventType !== 'rename') return;
+      setTimeout(() => {
+        const fp = path.join(MODS_DIR, fileName);
+        if (fs.existsSync(fp)) syncBackup(fp, 'mods');
+      }, 3000);
+    });
+    console.log(`[BackupSync] Watching ${MODS_DIR}`);
+  }
+
+  // 3. 定时备份存档（data/saves/）— 每 6 小时打包上传
+  if (fs.existsSync(SAVES_DIR)) {
+    backupSaves();
+    setInterval(backupSaves, 6 * 3600 * 1000);
+    console.log(`[BackupSync] Periodic saves backup (6h interval)`);
   }
 }
 

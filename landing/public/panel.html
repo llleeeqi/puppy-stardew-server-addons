@@ -149,6 +149,18 @@ h1 { font-size: 1.8em; margin-bottom: 2px; color: #fff; }
         <button class="btn-link btn-sm btn-ghost" onclick="toggleBackupConfig()">收起</button>
       </div>
       <div class="config-status" id="backup-config-status"></div>
+      <details style="margin-top:14px;font-size:0.82em;color:#888">
+        <summary style="cursor:pointer;color:#aaa">📖 恢复说明</summary>
+        <div style="margin-top:8px;line-height:1.8;padding:8px;background:rgba(0,0,0,0.2);border-radius:6px">
+          <b>存档恢复</b>：从远端 <code>saves/</code> 下载备份包，在服务器解压到<br>
+          <code style="background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px">/root/puppy-stardew-server/data/saves/</code><br>
+          解压后目录结构应为 <code>Saves/你的农场名_数字/</code><br>
+          然后在管理面板 → Saves 中设为默认存档并重启。<br><br>
+          <b>Mod 恢复</b>：从远端 <code>mods/</code> 下载 .zip 文件，放到<br>
+          <code style="background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px">/root/puppy-stardew-server/data/custom-mods/</code><br>
+          重启官方容器即可自动安装。
+        </div>
+      </details>
     </div>
   </div>
 
