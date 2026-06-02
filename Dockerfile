@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-websockify \
     nodejs npm \
-    wget ca-certificates curl \
+    wget ca-certificates curl zip \
     && rm -rf /var/lib/apt/lists/*
 
 RUN wget -qO- 'https://github.com/novnc/noVNC/archive/refs/tags/v1.4.0.tar.gz' | \

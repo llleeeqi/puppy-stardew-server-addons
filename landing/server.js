@@ -165,13 +165,13 @@ function checkModsAndBackup(config, cb) {
   if (currentSize === lastSize) { if (cb) cb(false); return; }
 
   const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const tarName = `mods-backup-${stamp}.tar.gz`;
-  const tarPath = `/tmp/${tarName}`;
+  const zipName = `mods-backup-${stamp}.zip`;
+  const zipPath = `/tmp/${zipName}`;
 
-  exec(`tar czf "${tarPath}" -C "${MODS_DIR}" . 2>/dev/null`, (tarErr) => {
-    if (tarErr) { console.log('[BackupSync] ❌ mods tar failed'); if (cb) cb(true); return; }
-    uploadFile(tarPath, `mods/${tarName}`, config, (upErr) => {
-      try { fs.unlinkSync(tarPath); } catch {}
+  exec(`zip -r "${zipPath}" . 2>/dev/null`, { cwd: MODS_DIR }, (zipErr) => {
+    if (zipErr) { console.log('[BackupSync] ❌ mods zip failed'); if (cb) cb(true); return; }
+    uploadFile(zipPath, `mods/${zipName}`, config, (upErr) => {
+      try { fs.unlinkSync(zipPath); } catch {}
       if (upErr) { console.log(`[BackupSync] ❌ mods backup upload failed: ${upErr.message}`); if (cb) cb(true); return; }
       console.log(`[BackupSync] ✓ mods backup uploaded (size changed: ${lastSize} → ${currentSize})`);
       const newState = loadSyncState();
