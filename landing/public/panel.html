@@ -194,13 +194,23 @@ async function logout() {
 async function loadBackupConfig() {
   try {
     const r = await fetch('/api/backup/config');
+    if (!r.ok) return;
     const cfg = await r.json();
-    document.getElementById('cfg-type').value = cfg.type || 'none';
+    const typeEl = document.getElementById('cfg-type');
+    if (!typeEl) return;
+    typeEl.value = cfg.type || 'none';
     if (cfg.webdav) {
-      document.getElementById('cfg-webdav-url').value = cfg.webdav.url || '';
-      document.getElementById('cfg-webdav-user').value = cfg.webdav.username || '';
-      document.getElementById('cfg-webdav-pass').value = cfg.webdav.password || '';
+      const setVal = (id, val) => { const e = document.getElementById(id); if (e) e.value = val || ''; };
+      setVal('cfg-webdav-url', cfg.webdav.url);
+      setVal('cfg-webdav-user', cfg.webdav.username);
+      setVal('cfg-webdav-pass', cfg.webdav.password);
     }
+    const keepEl = document.getElementById('cfg-keep-wd');
+    if (keepEl) keepEl.value = cfg.keep || 20;
+    onTypeChange();
+    updateBackupTag(cfg);
+  } catch (e) { console.log('loadBackupConfig error:', e); }
+}
     document.getElementById('cfg-keep').value = cfg.keep || 20;
     document.getElementById('cfg-keep-wd').value = cfg.keep || 20;
     onTypeChange();
@@ -215,14 +225,16 @@ function updateBackupTag(cfg) {
 }
 
 function onTypeChange() {
-  document.getElementById('cfg-webdav').style.display =
-    document.getElementById('cfg-type').value === 'webdav' ? 'block' : 'none';
+  const wd = document.getElementById('cfg-webdav');
+  const t = document.getElementById('cfg-type');
+  if (wd && t) wd.style.display = t.value === 'webdav' ? 'block' : 'none';
 }
 
 let configOpen = false;
 function toggleBackupConfig() {
   configOpen = !configOpen;
   document.getElementById('backup-config-form').classList.toggle('open', configOpen);
+  if (configOpen) onTypeChange();
 }
 
 async function saveBackupConfig() {
