@@ -140,7 +140,6 @@ h1 { font-size: 1.8em; margin-bottom: 2px; color: #fff; }
       </div>
       <div class="config-status" id="backup-config-status"></div>
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn-link btn-sm btn-ghost" onclick="manualModBackup()">📦 手动备份 Mod</button>
         <button class="btn-link btn-sm btn-ghost" onclick="listFiles('mods')">📋 备份 Mod 列表</button>
         <button class="btn-link btn-sm btn-ghost" onclick="listFiles('archives')">🗄️ 备份存档列表</button>
       </div>
@@ -290,9 +289,13 @@ async function listFiles(folder) {
       el.innerHTML = '<span style="color:#888">暂无文件</span>';
       return;
     }
-    el.innerHTML = files.slice().reverse().map(f =>
+    let html = folder === 'mods'
+      ? '<button class="btn-link btn-sm btn-ghost" onclick="manualModBackup()" style="margin-bottom:6px">📦 手动备份 Mod</button>'
+      : '';
+    html += files.slice().sort().reverse().map(f =>
       `<div style="padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05)">${f}</div>`
     ).join('');
+    el.innerHTML = html;
   } catch {
     el.innerHTML = '<span style="color:#f44336">获取失败</span>';
   }

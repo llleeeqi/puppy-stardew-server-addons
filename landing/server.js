@@ -158,14 +158,19 @@ function getModsTotalSize() {
   return total;
 }
 
-function checkModsAndBackup(config, cb) {
-  const currentSize = getModsTotalSize();
-  const state = loadSyncState();
-  const lastSize = state.mods_last_size || 0;
-  if (currentSize === lastSize) { if (cb) cb(false); return; }
+function checkModsAndBackup(config, cb, force) {
+  const stamp = new Date();
+  const dateStr = stamp.toISOString().slice(0, 10).replace(/-/g, '');
+  const timeStr = String(stamp.getHours()).padStart(2,'0') + String(stamp.getMinutes()).padStart(2,'0') + String(stamp.getSeconds()).padStart(2,'0');
 
-  const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const zipName = `mods-backup-${stamp}.zip`;
+  if (!force) {
+    const currentSize = getModsTotalSize();
+    const state = loadSyncState();
+    const lastSize = state.mods_last_size || 0;
+    if (currentSize === lastSize) { if (cb) cb(false); return; }
+  }
+
+  const zipName = `mods-backup-${dateStr}-${timeStr}.zip`;
   const zipPath = `/tmp/${zipName}`;
 
   exec(`zip -r "${zipPath}" . 2>/dev/null`, { cwd: MODS_DIR }, (zipErr) => {
@@ -173,12 +178,12 @@ function checkModsAndBackup(config, cb) {
     uploadFile(zipPath, `mods/${zipName}`, config, (upErr) => {
       try { fs.unlinkSync(zipPath); } catch {}
       if (upErr) { console.log(`[BackupSync] ❌ mods backup upload failed: ${upErr.message}`); if (cb) cb(true); return; }
-      console.log(`[BackupSync] ✓ mods backup uploaded (size changed: ${lastSize} → ${currentSize})`);
+      console.log(`[BackupSync] ✓ mods backup uploaded (${zipName})`);
       const newState = loadSyncState();
-      newState.mods_last_size = currentSize;
+      if (!force) newState.mods_last_size = currentSize;
       if (!newState.history) newState.history = {};
       if (!newState.history.mods) newState.history.mods = [];
-      newState.history.mods.push(tarName);
+      newState.history.mods.push(zipName);
       const keep = config.keep || 20;
       const all = newState.history.mods.sort();
       if (all.length > keep) {
@@ -216,7 +221,7 @@ function syncBackup(filePath, remoteFolder) {
       saveSyncState(state);
 
       // 面板备份同步成功后，顺便检查 mod 目录是否有变化
-      checkModsAndBackup(config);
+      checkModsAndBackup(config, null, false);
     }
   });
 }
@@ -372,7 +377,7 @@ const server = http.createServer((req, res) => {
     checkModsAndBackup(config, (err) => {
       if (err) sendJson(res, 500, { error: 'Mod 备份失败' });
       else sendJson(res, 200, { ok: true });
-    });
+    }, true);
     return;
   }
 
