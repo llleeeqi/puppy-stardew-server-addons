@@ -211,66 +211,41 @@ function backupSaves() {
 }
 
 function startBackupWatcher() {
-  const state = loadSyncState();
-  if (!state.history) state.history = {};
+  try {
+    const state = loadSyncState();
+    if (!state.history) state.history = {};
 
-  // 1. 监控自动备份存档（data/backups/）
-  if (fs.existsSync(BACKUPS_DIR)) {
-    fs.watch(BACKUPS_DIR, (eventType, fileName) => {
-      if (!fileName || !fileName.endsWith('.tar.gz') && !fileName.endsWith('.zip')) return;
-      if (eventType !== 'rename') return;
-      setTimeout(() => {
-        const fp = path.join(BACKUPS_DIR, fileName);
-        if (fs.existsSync(fp)) syncBackup(fp, 'archives');
-      }, 3000);
-    });
-    console.log(`[BackupSync] Watching ${BACKUPS_DIR}`);
-  }
+    if (fs.existsSync(BACKUPS_DIR)) {
+      fs.watch(BACKUPS_DIR, (eventType, fileName) => {
+        if (!fileName || !fileName.endsWith('.tar.gz') && !fileName.endsWith('.zip')) return;
+        if (eventType !== 'rename') return;
+        setTimeout(() => {
+          const fp = path.join(BACKUPS_DIR, fileName);
+          if (fs.existsSync(fp)) syncBackup(fp, 'archives');
+        }, 3000);
+      });
+      console.log(`[BackupSync] Watching ${BACKUPS_DIR}`);
+    } else console.log(`[BackupSync] Skip: ${BACKUPS_DIR} not found`);
 
-  // 2. 监控自定义 Mod（data/custom-mods/）— 只同步 .zip
-  if (fs.existsSync(MODS_DIR)) {
-    fs.watch(MODS_DIR, (eventType, fileName) => {
-      if (!fileName || !fileName.endsWith('.zip')) return;
-      if (eventType !== 'rename') return;
-      setTimeout(() => {
-        const fp = path.join(MODS_DIR, fileName);
-        if (fs.existsSync(fp)) syncBackup(fp, 'mods');
-      }, 3000);
-    });
-    console.log(`[BackupSync] Watching ${MODS_DIR}`);
-  }
+    if (fs.existsSync(MODS_DIR)) {
+      fs.watch(MODS_DIR, (eventType, fileName) => {
+        if (!fileName || !fileName.endsWith('.zip')) return;
+        if (eventType !== 'rename') return;
+        setTimeout(() => {
+          const fp = path.join(MODS_DIR, fileName);
+          if (fs.existsSync(fp)) syncBackup(fp, 'mods');
+        }, 3000);
+      });
+      console.log(`[BackupSync] Watching ${MODS_DIR}`);
+    } else console.log(`[BackupSync] Skip: ${MODS_DIR} not found`);
 
-  // 3. 定时备份存档（data/saves/）— 每 6 小时打包上传
-  if (fs.existsSync(SAVES_DIR)) {
-    backupSaves();
-    setInterval(backupSaves, 6 * 3600 * 1000);
-    console.log(`[BackupSync] Periodic saves backup (6h interval)`);
-  }
-}
-
-// ─── Backup Watcher ──────────────────────────────────────────────
-
-function startBackupWatcher() {
-  const state = loadSyncState();
-  state.synced.forEach(f => syncedFiles.add(f));
-
-  // Watch directory
-  if (fs.existsSync(BACKUPS_DIR)) {
-    fs.watch(BACKUPS_DIR, (eventType, fileName) => {
-      if (!fileName || !fileName.endsWith('.tar.gz') && !fileName.endsWith('.zip')) return;
-      if (eventType !== 'rename') return;
-      // 延迟等文件写完
-      setTimeout(() => {
-        const filePath = path.join(BACKUPS_DIR, fileName);
-        if (fs.existsSync(filePath) && !syncedFiles.has(fileName)) {
-          syncedFiles.add(fileName);
-          syncBackup(filePath);
-        }
-      }, 3000);
-    });
-    console.log(`[BackupSync] Watching ${BACKUPS_DIR}`);
-  } else {
-    console.log(`[BackupSync] Backup dir not found: ${BACKUPS_DIR}, watcher disabled`);
+    if (fs.existsSync(SAVES_DIR)) {
+      backupSaves();
+      setInterval(backupSaves, 6 * 3600 * 1000);
+      console.log(`[BackupSync] Saves auto-backup enabled (6h interval)`);
+    } else console.log(`[BackupSync] Skip: ${SAVES_DIR} not found`);
+  } catch (e) {
+    console.log(`[BackupSync] Error: ${e.message}`);
   }
 }
 
