@@ -1,0 +1,15 @@
+# 在 Dockerfile 的 apt-get install 段加入 python3-websockify
+# 在 "nodejs npm \" 后面加一行：
+
+    python3-websockify \
+
+# 然后在 "WORKDIR /home/steam" 和 "USER steam" 之间加入（放在 steamcmd 下载后面也行）：
+
+# Download noVNC for browser-based VNC access
+RUN wget -qO- 'https://github.com/novnc/noVNC/archive/refs/tags/v1.4.0.tar.gz' | \
+    tar xz -C /home/steam && \
+    mv /home/steam/noVNC-1.4.0 /home/steam/noVNC && \
+    chown -R steam:steam /home/steam/noVNC
+
+# 改 EXPOSE 行，加上 6080：
+EXPOSE 24642/udp 5900/tcp 6080/tcp 9090/tcp 18642/tcp

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>布吉岛</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍄</text></svg>">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #e0e0e0;
+}
+.container { max-width: 560px; width: 100%; text-align: center; }
+.logo { font-size: 4em; line-height: 1.2; margin-bottom: 2px; }
+h1 { font-size: 1.8em; margin-bottom: 2px; color: #fff; }
+.slogan { color: #4fc3f7; font-size: 0.88em; margin-bottom: 10px; min-height: 1.5em; transition: opacity 0.4s; }
+.join-ip {
+  display: inline-block; background: rgba(79,195,247,0.12); border: 1px solid rgba(79,195,247,0.25);
+  border-radius: 8px; padding: 8px 20px; margin-bottom: 28px; font-size: 0.92em;
+  color: #4fc3f7; font-family: 'SF Mono','Fira Code',monospace;
+}
+.card {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px; padding: 24px; margin-bottom: 14px; text-align: left; transition: background 0.2s;
+}
+.card .title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.card .title-row .icon { font-size: 1.4em; }
+.card .title-row .name { font-size: 1.15em; font-weight: 600; color: #fff; }
+.badge { display: inline-block; background: #4fc3f7; color: #000; font-size: 0.7em; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+.card .desc { font-size: 0.88em; color: #aaa; line-height: 1.7; }
+.card .highlight { color: #ff9800; font-weight: 500; }
+.card .tip {
+  display: block; margin-top: 10px; font-size: 0.85em; color: #f0f0f0;
+  padding: 8px 12px; border-radius: 8px; position: relative; z-index: 0;
+}
+.card .tip::before {
+  content: ''; position: absolute; inset: -2px; border-radius: 10px;
+  background: linear-gradient(90deg,#ff0000,#ff8800,#ffff00,#00ff00,#0088ff,#8800ff,#ff0000);
+  background-size: 600% 100%; animation: rainbow 20s linear infinite; z-index: -1;
+}
+.card .tip::after { content: ''; position: absolute; inset: 0; border-radius: 8px; background: #111; z-index: -1; }
+@keyframes rainbow { 0% { background-position: 0% 50%; } 100% { background-position: 600% 50%; } }
+.card .tip b { color: #66d9ff; }
+.card .btn-link {
+  display: inline-block; margin-top: 12px; padding: 8px 24px; border-radius: 8px;
+  border: none; font-size: 0.88em; font-weight: 600; cursor: pointer;
+  text-decoration: none; transition: opacity 0.2s;
+}
+.card .btn-link:hover { opacity: 0.85; }
+.btn-primary { background: #4fc3f7; color: #000; }
+.btn-vnc { background: #ff9800; color: #000; }
+.btn-sm { padding: 6px 16px; font-size: 0.82em; }
+.btn-ghost { background: rgba(255,255,255,0.08); color: #ccc; border: 1px solid rgba(255,255,255,0.1); }
+.btn-success { background: #4caf50; color: #fff; }
+.btn-danger { background: #f44336; color: #fff; }
+.config-form { margin-top: 12px; display: none; }
+.config-form.open { display: block; }
+.form-row { margin-bottom: 10px; }
+.form-row label { display: block; font-size: 0.8em; color: #888; margin-bottom: 3px; }
+.form-row input, .form-row select {
+  width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.3); color: #fff; font-size: 0.88em; outline: none;
+}
+.form-row input:focus { border-color: #4fc3f7; }
+.form-row-inline { display: flex; gap: 8px; align-items: end; }
+.form-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.config-status { font-size: 0.82em; margin-top: 8px; min-height: 1.2em; }
+.footer { margin-top: 24px; font-size: 0.82em; color: #666; line-height: 1.8; }
+.footer .slogan-bottom { color: #555; font-size: 0.95em; }
+.footer .slogan-bottom s { text-decoration: line-through; text-decoration-color: #ff5252; }
+.footer a { color: #666; text-decoration: none; }
+.footer a:hover { color: #4fc3f7; }
+.footer .logout-link { font-size: 0.85em; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">🍄</div>
+  <h1>布吉岛</h1>
+  <div class="slogan" id="slogan"></div>
+  <div class="join-ip">联机地址: 38.76.162.17</div>
+
+  <div class="card">
+    <div class="title-row">
+      <span class="icon">📊</span>
+      <span class="name">管理面板 <span class="badge">推荐</span></span>
+    </div>
+    <div class="desc">备份存档、管理 Mod、重启服务器</div>
+    <span class="tip">⚠️ 重启服务器后请进入 <b>VNC</b> 检查是否能暂停</span>
+    <a class="btn-link btn-primary" href="http://38.76.162.17:18642" target="_blank">打开管理面板</a>
+  </div>
+
+  <div class="card">
+    <div class="title-row">
+      <span class="icon">🖥️</span>
+      <span class="name">VNC 远程桌面</span>
+    </div>
+    <div class="desc">
+      浏览器直接连接游戏画面，无需额外安装 VNC 客户端<br>
+      <span class="highlight">适用场景：</span>角色卡住不动、对话卡界面、睡觉弹窗需要确认、第一次进游戏需要创建角色、捡到特殊道具弹出选项<br>
+      操作完全同步，键盘鼠标均可正常使用
+    </div>
+    <span class="tip">💡 操作完后直接<b>关掉标签页</b>就行，不会掉线</span>
+    <a class="btn-link btn-vnc" href="/api/vnc-open" target="_blank">打开 VNC</a>
+  </div>
+
+  <div class="card" id="backup-card">
+    <div class="title-row" onclick="toggleBackupConfig()" style="cursor:pointer">
+      <span class="icon">☁️</span>
+      <span class="name">备份同步</span>
+      <span style="margin-left:auto;font-size:0.82em;color:#666" id="backup-status-tag">配置 ›</span>
+    </div>
+    <div class="desc">游戏面板产出的备份文件自动同步到远端，保留最新 20 份</div>
+    <div class="config-form" id="backup-config-form">
+      <div class="form-row">
+        <label>同步类型</label>
+        <select id="cfg-type" onchange="onTypeChange()">
+          <option value="none">关闭</option>
+          <option value="s3">S3 兼容对象存储</option>
+          <option value="webdav">WebDAV</option>
+        </select>
+      </div>
+      <div id="cfg-s3" style="display:none">
+        <div class="form-row"><label>Endpoint</label><input id="cfg-s3-endpoint" placeholder="https://s3.amazonaws.com"></div>
+        <div class="form-row"><label>Bucket</label><input id="cfg-s3-bucket" placeholder="my-backups"></div>
+        <div class="form-row"><label>Region</label><input id="cfg-s3-region" placeholder="us-east-1"></div>
+        <div class="form-row"><label>Access Key</label><input id="cfg-s3-key" placeholder="AKID..."></div>
+        <div class="form-row"><label>Secret Key</label><input id="cfg-s3-secret" type="password" placeholder="sk-..."></div>
+        <div class="form-row"><label>路径前缀（可选）</label><input id="cfg-s3-path" placeholder="stardew/backups/"></div>
+        <div class="form-row"><label>保留份数</label><input id="cfg-keep" type="number" value="20" min="1" max="99"></div>
+      </div>
+      <div id="cfg-webdav" style="display:none">
+        <div class="form-row"><label>WebDAV URL</label><input id="cfg-webdav-url" placeholder="https://webdav.example.com/backups/"></div>
+        <div class="form-row"><label>用户名（可选）</label><input id="cfg-webdav-user" placeholder="user"></div>
+        <div class="form-row"><label>密码</label><input id="cfg-webdav-pass" type="password" placeholder="password"></div>
+        <div class="form-row"><label>保留份数</label><input id="cfg-keep-wd" type="number" value="20" min="1" max="99"></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-link btn-sm btn-success" onclick="saveBackupConfig()">保存</button>
+        <button class="btn-link btn-sm btn-ghost" onclick="testBackupConfig()">测试连接</button>
+        <button class="btn-link btn-sm btn-ghost" onclick="toggleBackupConfig()">收起</button>
+      </div>
+      <div class="config-status" id="backup-config-status"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="slogan-bottom">做大最强再创辉煌，布吉岛欢迎 <s>帕鲁</s> 业主回家</div>
+    <div style="margin-top:6px"><a class="logout-link" href="#" onclick="logout()">退出登录</a></div>
+  </div>
+</div>
+<script>
+const slogans = [
+  '🧑‍🌾 今天也是被祝尼魔祝福的一天','🎣 祝你今天钓到一条传说鱼','🕹️ 矿井五层，有史莱姆，速来',
+  '📦 社区中心收集包进度：? / 6','🚫 皮埃尔的商店明天关门（真的）','🤫 刘易斯 shorts 又丢了',
+  '⏱️ 星露谷一天 = 现实 13 分钟','🌧️ 明天大概率下雨，记得收作物','🎮 按住 F9 进入挂机模式',
+  '🏪 Joja Mart 会员请走侧门','🚌 潘姆今天又没来开车','💤 凌晨 2 点不睡觉会晕倒',
+  '🎁 祝尼魔不喜欢被盯着看','🌱 浇水是农场主的健身方式','🍄 红蘑菇吃了会掉血，别问怎么知道的',
+];
+let idx = Math.floor(Math.random() * slogans.length);
+const sel = document.getElementById('slogan');
+function showSlogan() {
+  sel.style.opacity = 0;
+  setTimeout(() => { sel.textContent = slogans[idx]; sel.style.opacity = 1; }, 300);
+}
+showSlogan();
+setInterval(() => { idx = (idx + 1) % slogans.length; showSlogan(); }, 5000);
+
+async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.reload();
+}
+
+// Backup config
+async function loadBackupConfig() {
+  try {
+    const r = await fetch('/api/backup/config');
+    const cfg = await r.json();
+    document.getElementById('cfg-type').value = cfg.type || 'none';
+    if (cfg.s3) {
+      document.getElementById('cfg-s3-endpoint').value = cfg.s3.endpoint || '';
+      document.getElementById('cfg-s3-bucket').value = cfg.s3.bucket || '';
+      document.getElementById('cfg-s3-region').value = cfg.s3.region || '';
+      document.getElementById('cfg-s3-key').value = cfg.s3.accessKey || '';
+      document.getElementById('cfg-s3-secret').value = cfg.s3.secretKey || '';
+      document.getElementById('cfg-s3-path').value = cfg.s3.path || '';
+    }
+    if (cfg.webdav) {
+      document.getElementById('cfg-webdav-url').value = cfg.webdav.url || '';
+      document.getElementById('cfg-webdav-user').value = cfg.webdav.username || '';
+      document.getElementById('cfg-webdav-pass').value = cfg.webdav.password || '';
+    }
+    document.getElementById('cfg-keep').value = cfg.keep || 20;
+    document.getElementById('cfg-keep-wd').value = cfg.keep || 20;
+    onTypeChange();
+    updateBackupTag(cfg);
+  } catch {}
+}
+
+function updateBackupTag(cfg) {
+  const tag = document.getElementById('backup-status-tag');
+  if (!cfg.type || cfg.type === 'none') tag.textContent = '未配置 ›';
+  else tag.textContent = cfg.type === 's3' ? 'S3 ✓' : 'WebDAV ✓';
+}
+
+function onTypeChange() {
+  const t = document.getElementById('cfg-type').value;
+  document.getElementById('cfg-s3').style.display = t === 's3' ? 'block' : 'none';
+  document.getElementById('cfg-webdav').style.display = t === 'webdav' ? 'block' : 'none';
+}
+
+let configOpen = false;
+function toggleBackupConfig() {
+  configOpen = !configOpen;
+  document.getElementById('backup-config-form').classList.toggle('open', configOpen);
+}
+
+async function saveBackupConfig() {
+  const t = document.getElementById('cfg-type').value;
+  const cfg = { type: t, keep: 20 };
+  if (t === 's3') {
+    cfg.s3 = {
+      endpoint: document.getElementById('cfg-s3-endpoint').value,
+      bucket: document.getElementById('cfg-s3-bucket').value,
+      region: document.getElementById('cfg-s3-region').value,
+      accessKey: document.getElementById('cfg-s3-key').value,
+      secretKey: document.getElementById('cfg-s3-secret').value,
+      path: document.getElementById('cfg-s3-path').value,
+    };
+    cfg.keep = parseInt(document.getElementById('cfg-keep').value) || 20;
+  } else if (t === 'webdav') {
+    cfg.webdav = {
+      url: document.getElementById('cfg-webdav-url').value,
+      username: document.getElementById('cfg-webdav-user').value,
+      password: document.getElementById('cfg-webdav-pass').value,
+    };
+    cfg.keep = parseInt(document.getElementById('cfg-keep-wd').value) || 20;
+  }
+  const st = document.getElementById('backup-config-status');
+  try {
+    const r = await fetch('/api/backup/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cfg),
+    });
+    const d = await r.json();
+    if (d.ok) { st.textContent = '✓ 已保存'; st.style.color = '#4caf50'; updateBackupTag(cfg); }
+    else st.textContent = '保存失败';
+  } catch { st.textContent = '请求失败'; }
+}
+
+async function testBackupConfig() {
+  const st = document.getElementById('backup-config-status');
+  st.textContent = '测试中...'; st.style.color = '#888';
+  try {
+    const r = await fetch('/api/backup/test', { method: 'POST' });
+    const d = await r.json();
+    if (d.ok) { st.textContent = '✓ 连接成功'; st.style.color = '#4caf50'; }
+    else { st.textContent = '✗ ' + (d.error || '失败'); st.style.color = '#f44336'; }
+  } catch { st.textContent = '请求失败'; st.style.color = '#f44336'; }
+}
+
+loadBackupConfig();
+</script>
+</body>
+</html>

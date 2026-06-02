@@ -1,0 +1,26 @@
+services:
+  stardew-web-vnc:
+    build: .
+    container_name: puppy-stardew-web-vnc
+    restart: unless-stopped
+    ports:
+      - "43000:6080/tcp"   # noVNC
+      - "53000:8080/tcp"   # Landing page
+    environment:
+      - VNC_HOST=puppy-stardew
+      - VNC_PORT=5900
+      - VNC_PASSWORD=llleeeqi
+      - BACKUPS_DIR=/data/backups
+      - BACKUP_CONFIG=/data/config/backup.json
+      - TZ=Asia/Shanghai
+    volumes:
+      - /root/puppy-stardew-server/data/backups:/data/backups:ro
+      - backup-config:/data/config
+
+volumes:
+  backup-config:
+
+networks:
+  default:
+    name: puppy-stardew-server_default
+    external: true

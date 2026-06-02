@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>布吉岛</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍄</text></svg>">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #e0e0e0;
+}
+.container {
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+.logo {
+  font-size: 4em;
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+h1 {
+  font-size: 1.6em;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.subtitle {
+  color: #888;
+  font-size: 0.85em;
+  margin-bottom: 28px;
+  min-height: 1.3em;
+}
+.input-group {
+  margin-bottom: 16px;
+  text-align: left;
+}
+label {
+  display: block;
+  font-size: 0.85em;
+  color: #aaa;
+  margin-bottom: 6px;
+}
+input[type="password"] {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-size: 1em;
+  outline: none;
+  transition: border-color 0.2s;
+}
+input[type="password"]:focus {
+  border-color: #4fc3f7;
+}
+button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: #4fc3f7;
+  color: #000;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button:hover:not(:disabled) {
+  opacity: 0.85;
+}
+.error {
+  color: #ff5252;
+  font-size: 0.85em;
+  margin-top: 10px;
+  min-height: 1.2em;
+}
+.server-ip {
+  margin-top: 24px;
+  font-size: 0.78em;
+  color: #555;
+  line-height: 1.8;
+}
+.server-ip s {
+  text-decoration: line-through;
+  text-decoration-color: #ff5252;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">🍄</div>
+  <h1>布吉岛</h1>
+  <div class="subtitle" id="slogan"></div>
+  <div class="input-group">
+    <label for="pass">访问密码</label>
+    <input type="password" id="pass" placeholder="输入密码" autofocus
+           onkeydown="if(event.key==='Enter')login()">
+  </div>
+  <button id="btn" onclick="login()">进入</button>
+  <div class="error" id="err"></div>
+  <div class="server-ip">
+    <div>服务器 IP: 38.76.162.17</div>
+    <div style="margin-top:4px;font-size:0.9em;color:#666">做大最强再创辉煌，布吉岛欢迎 <s>帕鲁</s> 业主回家</div>
+  </div>
+</div>
+<script>
+const slogans = [
+  '🧑‍🌾 今天也是被祝尼魔祝福的一天',
+  '🎣 祝你今天钓到一条传说鱼',
+  '🕹️ 矿井五层，有史莱姆，速来',
+  '📦 社区中心收集包进度：? / 6',
+  '🚫 皮埃尔的商店明天关门（真的）',
+  '🤫 刘易斯 shorts 又丢了',
+  '⏱️ 星露谷一天 = 现实 13 分钟',
+  '🌧️ 明天大概率下雨，记得收作物',
+  '🎮 按住 F9 进入挂机模式',
+  '🏪 Joja Mart 会员请走侧门',
+  '🚌 潘姆今天又没来开车',
+  '💤 凌晨 2 点不睡觉会晕倒',
+  '🎁 祝尼魔不喜欢被盯着看',
+  '🌱 浇水是农场主的健身方式',
+  '🍄 红蘑菇吃了会掉血，别问怎么知道的',
+];
+
+let idx = Math.floor(Math.random() * slogans.length);
+const el = document.getElementById('slogan');
+function showSlogan() {
+  el.style.opacity = 0;
+  setTimeout(() => {
+    el.textContent = slogans[idx];
+    el.style.opacity = 1;
+  }, 300);
+}
+showSlogan();
+setInterval(() => {
+  idx = (idx + 1) % slogans.length;
+  showSlogan();
+}, 5000);
+
+let loading = false;
+async function login() {
+  if (loading) return;
+  const pass = document.getElementById('pass').value;
+  const err = document.getElementById('err');
+  const btn = document.getElementById('btn');
+  if (!pass) { err.textContent = '请输入密码'; return; }
+  loading = true;
+  btn.disabled = true;
+  btn.textContent = '验证中...';
+  try {
+    const r = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pass })
+    });
+    if (r.ok) {
+      window.location.reload();
+    } else {
+      const d = await r.json();
+      err.textContent = d.message || '密码错误';
+      setTimeout(() => { loading = false; btn.disabled = false; btn.textContent = '进入'; }, 3000);
+    }
+  } catch {
+    err.textContent = '请求失败';
+    setTimeout(() => { loading = false; btn.disabled = false; btn.textContent = '进入'; }, 3000);
+  }
+}
+</script>
+</body>
+</html>

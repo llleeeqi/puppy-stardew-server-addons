@@ -1,0 +1,7 @@
+# 在 docker-compose.yml 的 ports 段加入：
+
+      # noVNC port (browser-based VNC access)
+      - "43000:6080/tcp"
+
+      # Landing page (quick link portal with password)
+      - "53000:8080/tcp"

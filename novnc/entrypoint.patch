@@ -1,0 +1,25 @@
+# 在 entrypoint.sh 的 Step 6 末尾（VNC 启动验证之后），插入：
+
+        # Start noVNC for browser-based VNC access
+        if command -v websockify >/dev/null 2>&1 && [ -d "/home/steam/noVNC" ]; then
+            log_info "Starting noVNC WebSocket proxy on port 6080..."
+            # 创建根路径重定向到 vnc.html
+            if [ ! -f "/home/steam/noVNC/index.html" ]; then
+                cat > /home/steam/noVNC/index.html << 'REDIRECT'
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="refresh" content="0;url=vnc.html">
+</head><body>
+<a href="vnc.html">VNC Desktop</a>
+</body></html>
+REDIRECT
+            fi
+            websockify --web /home/steam/noVNC 6080 localhost:5900 > /dev/null 2>&1 &
+            NOVNC_PID=$!
+            sleep 1
+            if kill -0 "$NOVNC_PID" 2>/dev/null; then
+                log_info "✓ noVNC started - http://your-server-ip:6080"
+            else
+                log_warn "⚠ noVNC failed to start"
+            fi
+        fi
