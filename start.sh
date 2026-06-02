@@ -2,7 +2,7 @@
 
 VNC_HOST=${VNC_HOST:-localhost}
 VNC_PORT=${VNC_PORT:-5900}
-VNC_PASSWORD=${VNC_PASSWORD:-llleeeqi}
+VNC_PASSWORD=${VNC_PASSWORD:-changeme}
 
 # Create noVNC redirect
 if [ ! -f /opt/noVNC/index.html ]; then

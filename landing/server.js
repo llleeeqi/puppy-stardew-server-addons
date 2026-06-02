@@ -5,8 +5,8 @@ const path = require('path');
 const { exec } = require('child_process');
 
 const PORT = 8080;
-const LOGIN_PASSWORD = 'llleeeqi';
-const VNC_PASSWORD = 'llleeeqi';
+const LOGIN_PASSWORD = process.env.LOGIN_PASSWORD || 'changeme';
+const VNC_PASSWORD = process.env.VNC_PASSWORD || 'changeme';
 const VNC_HOST = process.env.VNC_HOST || process.env.VNC_PUBLIC_IP || 'localhost';
 const VNC_PORT = process.env.VNC_WEB_PORT || '43000';
 const BACKUPS_DIR = process.env.BACKUPS_DIR || '/data/backups';
