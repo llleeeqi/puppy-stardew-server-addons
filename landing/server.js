@@ -307,8 +307,10 @@ const server = http.createServer((req, res) => {
 
   // API: VNC redirect
   if (pathname === '/api/vnc-open') {
-    const target = `/vnc.html?autoconnect=true&password=${encodeURIComponent(VNC_PASSWORD)}&host=${VNC_HOST}&port=${VNC_PORT}`;
-    res.writeHead(302, { Location: `http://${VNC_HOST}:${VNC_PORT}${target}` });
+    const extHost = SERVER_IP;
+    const extPort = VNC_PORT;
+    const target = `/vnc.html?autoconnect=true&password=${encodeURIComponent(VNC_PASSWORD)}&host=${extHost}&port=${extPort}`;
+    res.writeHead(302, { Location: `http://${extHost}:${extPort}${target}` });
     res.end();
     return;
   }
