@@ -172,24 +172,6 @@ function syncBackup(filePath, remoteFolder) {
   });
 }
 
-function backupSaves() {
-  const config = loadBackupConfig();
-  if (!config.type || config.type === 'none') return;
-  if (!fs.existsSync(SAVES_DIR)) return;
-
-  const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const tarPath = `/tmp/saves-${stamp}-${Date.now()}.tar.gz`;
-
-  exec(`tar czf "${tarPath}" -C "${SAVES_DIR}" . 2>/dev/null`, (err) => {
-    if (err) { console.log('[BackupSync] ❌ saves tar failed'); return; }
-    uploadFile(tarPath, `saves/saves-${stamp}.tar.gz`, config, (uErr) => {
-      if (uErr) console.log(`[BackupSync] ❌ saves upload failed: ${uErr.message}`);
-      else console.log(`[BackupSync] ✓ saves backed up`);
-      try { fs.unlinkSync(tarPath); } catch {}
-    });
-  });
-}
-
 function startBackupWatcher() {
   try {
     const state = loadSyncState();
@@ -219,11 +201,7 @@ function startBackupWatcher() {
       console.log(`[BackupSync] Watching ${MODS_DIR}`);
     } else console.log(`[BackupSync] Skip: ${MODS_DIR} not found`);
 
-    if (fs.existsSync(SAVES_DIR)) {
-      backupSaves();
-      setInterval(backupSaves, 6 * 3600 * 1000);
-      console.log(`[BackupSync] Saves auto-backup enabled (6h interval)`);
-    } else console.log(`[BackupSync] Skip: ${SAVES_DIR} not found`);
+    if (!fs.existsSync(SAVES_DIR)) console.log(`[BackupSync] Skip: ${SAVES_DIR} not found`);
   } catch (e) {
     console.log(`[BackupSync] Error: ${e.message}`);
   }

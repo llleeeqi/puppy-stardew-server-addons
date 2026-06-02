@@ -15,13 +15,11 @@ services:
       - PANEL_PORT=${PANEL_PORT:-18642}
       - VNC_WEB_PORT=${VNC_WEB_PORT:-43000}
       - BACKUPS_DIR=/data/backups
-      - SAVES_DIR=/data/saves
       - MODS_DIR=/data/custom-mods
       - BACKUP_CONFIG=/data/config/backup.json
       - TZ=Asia/Shanghai
     volumes:
       - /root/puppy-stardew-server/data/backups:/data/backups:ro
-      - /root/puppy-stardew-server/data/saves:/data/saves:ro
       - /root/puppy-stardew-server/data/custom-mods:/data/custom-mods:ro
       - backup-config:/data/config
 
