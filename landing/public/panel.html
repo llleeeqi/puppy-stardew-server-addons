@@ -86,7 +86,7 @@ h1 { font-size: 1.8em; margin-bottom: 2px; color: #fff; }
   <div class="logo">🍄</div>
   <h1>布吉岛</h1>
   <div class="slogan" id="slogan"></div>
-  <div class="join-ip">联机地址: 38.76.162.17</div>
+  <div class="join-ip" id="cfg-join">联机地址: <span id="cfg-ip">加载中...</span></div>
 
   <div class="card">
     <div class="title-row">
@@ -95,7 +95,7 @@ h1 { font-size: 1.8em; margin-bottom: 2px; color: #fff; }
     </div>
     <div class="desc">备份存档、管理 Mod、重启服务器</div>
     <span class="tip">⚠️ 重启服务器后请进入 <b>VNC</b> 检查是否能暂停</span>
-    <a class="btn-link btn-primary" href="http://38.76.162.17:18642" target="_blank">打开管理面板</a>
+    <a class="btn-link btn-primary" id="cfg-panel-link" href="#" target="_blank">打开管理面板</a>
   </div>
 
   <div class="card">
@@ -158,6 +158,10 @@ h1 { font-size: 1.8em; margin-bottom: 2px; color: #fff; }
   </div>
 </div>
 <script>
+fetch('/api/config').then(r=>r.json()).then(c=>{
+  document.getElementById('cfg-ip').textContent = c.serverIp;
+  document.getElementById('cfg-panel-link').href = c.panelUrl;
+}).catch(()=>{});
 const slogans = [
   '🧑‍🌾 今天也是被祝尼魔祝福的一天','🎣 祝你今天钓到一条传说鱼','🕹️ 矿井五层，有史莱姆，速来',
   '📦 社区中心收集包进度：? / 6','🚫 皮埃尔的商店明天关门（真的）','🤫 刘易斯 shorts 又丢了',

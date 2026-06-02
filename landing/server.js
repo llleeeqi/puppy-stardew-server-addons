@@ -7,6 +7,8 @@ const { exec } = require('child_process');
 const PORT = 8080;
 const LOGIN_PASSWORD = process.env.LOGIN_PASSWORD || 'changeme';
 const VNC_PASSWORD = process.env.VNC_PASSWORD || 'changeme';
+const SERVER_IP = process.env.SERVER_IP || '127.0.0.1';
+const PANEL_PORT = process.env.PANEL_PORT || '18642';
 const VNC_HOST = process.env.VNC_HOST || process.env.VNC_PUBLIC_IP || 'localhost';
 const VNC_PORT = process.env.VNC_WEB_PORT || '43000';
 const BACKUPS_DIR = process.env.BACKUPS_DIR || '/data/backups';
@@ -251,6 +253,16 @@ const server = http.createServer((req, res) => {
   if (!validateSession(cookies.session)) {
     if (pathname.startsWith('/api/')) { sendJson(res, 401, { error: 'unauthorized' }); return; }
     serveStatic(res, path.join(PUBLIC, 'login.html'));
+    return;
+  }
+
+  // API: public config (server IP, panel URL etc)
+  if (pathname === '/api/config') {
+    sendJson(res, 200, {
+      serverIp: SERVER_IP,
+      panelUrl: `http://${SERVER_IP}:${PANEL_PORT}`,
+      vncUrl: `http://${SERVER_IP}:${VNC_PORT}`,
+    });
     return;
   }
 

@@ -11,6 +11,9 @@ services:
       - VNC_PORT=5900
       - VNC_PASSWORD=${VNC_PASSWORD:-changeme}
       - LOGIN_PASSWORD=${LOGIN_PASSWORD:-changeme}
+      - SERVER_IP=${SERVER_IP:-127.0.0.1}
+      - PANEL_PORT=${PANEL_PORT:-18642}
+      - VNC_WEB_PORT=${VNC_WEB_PORT:-43000}
       - BACKUPS_DIR=/data/backups
       - BACKUP_CONFIG=/data/config/backup.json
       - TZ=Asia/Shanghai

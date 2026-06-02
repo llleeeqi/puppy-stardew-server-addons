@@ -112,11 +112,12 @@ button:hover:not(:disabled) {
   <button id="btn" onclick="login()">进入</button>
   <div class="error" id="err"></div>
   <div class="server-ip">
-    <div>服务器 IP: 38.76.162.17</div>
+    <div>服务器 IP: <span id="cfg-ip">加载中...</span></div>
     <div style="margin-top:4px;font-size:0.9em;color:#666">做大最强再创辉煌，布吉岛欢迎 <s>帕鲁</s> 业主回家</div>
   </div>
 </div>
 <script>
+fetch('/api/config').then(r=>r.json()).then(c=>{document.getElementById('cfg-ip').textContent=c.serverIp}).catch(()=>{});
 const slogans = [
   '🧑‍🌾 今天也是被祝尼魔祝福的一天',
   '🎣 祝你今天钓到一条传说鱼',
