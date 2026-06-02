@@ -329,6 +329,13 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // API: backup file list
+  if (pathname === '/api/backup/files' && req.method === 'GET') {
+    const state = loadSyncState();
+    sendJson(res, 200, state.history || {});
+    return;
+  }
+
   // API: backup test
   if (pathname === '/api/backup/test' && req.method === 'POST') {
     const config = loadBackupConfig();
