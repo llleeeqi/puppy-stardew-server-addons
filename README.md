@@ -1,55 +1,58 @@
-# Puppy Stardew Server — Custom Addons
+# Puppy Stardew Server Addons
 
-独立外挂模块，与官方项目分离。跑完官方 `docker compose up -d` 后运行本模块即可。
+> [官方项目](https://github.com/AmigaMeow/puppy-stardew-server) 的外挂模块，跑完官方后再部署本模块。
 
-## 内容
+## 功能
 
-- **noVNC** — 浏览器 VNC 访问（端口 43000）
-- **快捷跳转面板** — 密码保护的入口页（端口 53000）
-- **备份自动同步** — 监听 `data/backups/`，新备份文件实时推送到远端（S3 / WebDAV）
+- **🖥️ noVNC 浏览器远程桌面** — 无需 VNC 客户端，浏览器直接操作游戏
+- **🏠 快捷跳转面板** — 密码保护，集中管理面板 + VNC 入口
+- **☁️ 备份自动同步** — 监听 `data/backups/`，新备份实时推送 S3 / WebDAV，保留最新 20 份
 
-## 部署
+## 一行命令部署
 
 ```bash
-# 1. 部署官方项目
-git clone https://github.com/AmigaMeow/puppy-stardew-server.git
-cd puppy-stardew-server
-cp .env.example .env   # 配置 Steam 凭证
-./init.sh
-docker compose up -d
-
-# 2. 部署外挂模块
-git clone https://github.com/<你的账号>/puppy-stardew-addons.git custom-addons
-docker compose -f custom-addons/docker-compose.yml up -d
+curl -sSL https://raw.githubusercontent.com/llleeeqi/puppy-stardew-server-addons/main/quick-start.sh | bash
 ```
 
-## 配置备份同步
+脚本会：
+1. 检查官方容器是否运行
+2. 询问登录密码、VNC 密码、服务器 IP
+3. 下载配置、生成 `.env`
+4. 启动外挂容器
 
-访问 `http://服务器IP:53000` → 输入密码 → 点击 **☁️ 备份同步** → 展开表单。
+## 手动部署
 
-支持两种目标：
-- **S3 兼容对象存储** — 任意 S3 兼容服务（AWS、MinIO、阿里云 OSS 等）
-- **WebDAV** — 支持 WebDAV 协议的网盘或服务器
+```bash
+# 1. 先部署官方项目（如果用了一键脚本则跳过）
+curl -sSL https://raw.githubusercontent.com/AmigaMeow/puppy-stardew-server/main/quick-start.sh | bash
 
-配置保存后自动生效，新备份文件产生后实时推送，远端保留最新 20 份。
+# 2. 部署外挂模块
+git clone https://github.com/llleeeqi/puppy-stardew-server-addons.git
+cd puppy-stardew-server-addons
+cp .env.example .env    # 编辑密码和服务器 IP
+docker compose up -d
+```
 
 ## 访问入口
 
 | 地址 | 用途 |
 |---|---|
-| `http://服务器IP:53000` | 快捷跳转面板（密码：登入页面显示） |
+| `http://服务器IP:53000` | 快捷跳转面板（配置密码后访问） |
 | `http://服务器IP:43000` | noVNC 远程桌面 |
 | `http://服务器IP:18642` | 官方管理面板 |
 
-## 迁移
+## 配置备份同步
+
+访问 `http://服务器IP:53000` → 输入密码 → 点击 **☁️ 备份同步** → 展开表单配置 S3 或 WebDAV 目标。
+
+## 迁移到新服务器
 
 ```bash
-# 打包存档和配置
+# 打包
 tar czf stardew-migrate.tar.gz \
-  -C /root/puppy-stardew-server data/ \
-  -C /root custom-addons/
+  -C /root/puppy-stardew-server data/
 
-# 新服务器部署
-tar xzf stardew-migrate.tar.gz
-# 部署官方项目 + 外挂模块
+# 新服务器
+tar xzf stardew-migrate.tar.gz -C /root/puppy-stardew-server/
+# 部署官方项目 → 部署外挂模块
 ```
