@@ -140,7 +140,8 @@ h1 { font-size: 1.8em; margin-bottom: 2px; color: #fff; }
       </div>
       <div class="config-status" id="backup-config-status"></div>
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn-link btn-sm btn-ghost" onclick="listFiles('mods')">📦 备份 Mod 列表</button>
+        <button class="btn-link btn-sm btn-ghost" onclick="manualModBackup()">📦 手动备份 Mod</button>
+        <button class="btn-link btn-sm btn-ghost" onclick="listFiles('mods')">📋 备份 Mod 列表</button>
         <button class="btn-link btn-sm btn-ghost" onclick="listFiles('archives')">🗄️ 备份存档列表</button>
       </div>
       <div id="backup-file-list" style="margin-top:8px;font-size:0.82em;color:#aaa;max-height:200px;overflow-y:auto;display:none"></div>
@@ -262,6 +263,17 @@ async function testBackupConfig() {
     const r = await fetch('/api/backup/test', { method: 'POST' });
     const d = await r.json();
     if (d.ok) { st.textContent = '✓ 连接成功'; st.style.color = '#4caf50'; }
+    else { st.textContent = '✗ ' + (d.error || '失败'); st.style.color = '#f44336'; }
+  } catch { st.textContent = '请求失败'; st.style.color = '#f44336'; }
+}
+
+async function manualModBackup() {
+  const st = document.getElementById('backup-config-status');
+  st.textContent = '备份中...'; st.style.color = '#888';
+  try {
+    const r = await fetch('/api/backup/mods/manual', { method: 'POST' });
+    const d = await r.json();
+    if (d.ok) { st.textContent = '✓ Mod 备份完成'; st.style.color = '#4caf50'; listFiles('mods'); }
     else { st.textContent = '✗ ' + (d.error || '失败'); st.style.color = '#f44336'; }
   } catch { st.textContent = '请求失败'; st.style.color = '#f44336'; }
 }

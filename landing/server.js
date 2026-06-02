@@ -365,6 +365,17 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // API: manual mod backup
+  if (pathname === '/api/backup/mods/manual' && req.method === 'POST') {
+    const config = loadBackupConfig();
+    if (config.type === 'none' || !config.type) { sendJson(res, 400, { error: '未配置备份目标' }); return; }
+    checkModsAndBackup(config, (err) => {
+      if (err) sendJson(res, 500, { error: 'Mod 备份失败' });
+      else sendJson(res, 200, { ok: true });
+    });
+    return;
+  }
+
   // Static files
   if (pathname === '/' || pathname === '/panel.html') {
     serveStatic(res, path.join(PUBLIC, 'panel.html'));
