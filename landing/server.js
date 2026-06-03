@@ -163,8 +163,8 @@ function checkModsAndBackup(config, cb, force) {
   const dateStr = stamp.toISOString().slice(0, 10).replace(/-/g, '');
   const timeStr = String(stamp.getHours()).padStart(2,'0') + String(stamp.getMinutes()).padStart(2,'0') + String(stamp.getSeconds()).padStart(2,'0');
 
+  const currentSize = getModsTotalSize();
   if (!force) {
-    const currentSize = getModsTotalSize();
     const state = loadSyncState();
     const lastSize = state.mods_last_size || 0;
     if (currentSize === lastSize) { if (cb) cb(false); return; }
