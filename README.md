@@ -48,8 +48,19 @@ docker compose up -d
 | 地址 | 用途 |
 |---|---|
 | `http://服务器IP:53000` | 快捷跳转面板（配置密码后访问） |
-| `http://服务器IP:43000` | noVNC 远程桌面 |
+| `http://服务器IP:43000` | noVNC 浏览器远程桌面 |
 | `http://服务器IP:18642` | 官方管理面板 |
+
+从跳转面板点击「打开 VNC」会自动带上密码连接（无需手动输入）。
+
+### noVNC 故障排查
+
+若 VNC App 能连但 noVNC 不行：
+
+1. **直接测试**：浏览器打开 `http://服务器IP:43000/vnc.html?autoconnect=true&password=你的VNC密码`
+2. F12 打开浏览器控制台查看是否有报错（JavaScript 错误、WebSocket 被拒等）
+3. 部分公司/校园代理会拦截 WebSocket，导致 noVNC 连不上（VNC App 直连 TCP 不受影响）
+4. 确认 `.env` 中 `VNC_PASSWORD` 与官方容器一致（VNC 密码最长 8 位）
 
 ## 配置备份同步
 
